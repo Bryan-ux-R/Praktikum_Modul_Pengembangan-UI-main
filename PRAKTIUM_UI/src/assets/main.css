@@ -1,0 +1,14 @@
+@import './base.css';
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+  font-weight: normal;
+}
+
+html,
+body {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
+}
