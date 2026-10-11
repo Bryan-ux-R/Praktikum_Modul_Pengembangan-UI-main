@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div class="detail-content">
+    <div class="detail-grid grid-asymmetric">
       <div class="main-desc">
         <h2>About This Event</h2>
         <p>
@@ -45,7 +45,7 @@
         </ul>
       </div>
 
-      <div class="sidebar">
+      <div class="sidebar sticky-pane">
         <div class="ticket-card">
           <h3>Registration</h3>
           <p class="price">Free</p>
@@ -125,13 +125,14 @@
   font-size: 1.05rem;
 }
 
-.detail-content {
-  display: flex;
-  gap: 4rem;
+.grid-asymmetric {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-12);
 }
 
 .main-desc {
-  flex: 2;
+  min-width: 0;
 }
 
 .main-desc h2 {
@@ -173,7 +174,13 @@
 }
 
 .sidebar {
-  flex: 1;
+  min-width: 0;
+}
+
+.sticky-pane {
+  position: sticky;
+  top: 100px;
+  align-self: start;
 }
 
 .ticket-card {
@@ -183,8 +190,6 @@
   border: 1px solid #f0f0f0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
   text-align: center;
-  position: sticky;
-  top: 100px;
 }
 
 .ticket-card h3 {
@@ -209,7 +214,7 @@
   display: block;
   width: 100%;
   padding: 1.2rem;
-  background: #1c1948;
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 12px;
@@ -221,7 +226,7 @@
 }
 
 .btn-register:hover {
-  background: #6644ff;
+  background: var(--primary-hover);
 }
 
 .spots {
@@ -232,7 +237,15 @@
 }
 
 @media (max-width: 900px) {
-  .detail-content { flex-direction: column; }
+  .grid-asymmetric {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+
+  .sticky-pane {
+    position: static;
+  }
+
   .detail-header { padding: 3rem 2rem; }
   .header-content h1 { font-size: 2.2rem; }
 }

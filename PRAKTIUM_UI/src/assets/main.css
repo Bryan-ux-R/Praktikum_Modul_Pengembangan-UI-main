@@ -1,5 +1,30 @@
 @import './base.css';
 
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --primary: #6644ff;
+  --primary-hover: #5533ee;
+  --text-main: #1c1948;
+  --text-muted: #666;
+  --bg-light: #fdfdfd;
+  --bg-gray: #f4f4f5;
+  --border-color: #e0e0e0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 #app {
   width: 100%;
   min-height: 100vh;
@@ -11,4 +36,23 @@ body {
   width: 100%;
   min-width: 320px;
   min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  color: var(--text-main);
+  background-color: #fff;
+}
+
+.container-fluid {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4);
+}
+
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-4);
 }
