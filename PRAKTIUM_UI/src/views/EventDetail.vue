@@ -1,133 +1,137 @@
+<script setup>
+const registerForEvent = () => {
+  window.location.href =
+    'mailto:hello@gatherly.com?subject=Registration%20for%20Vue.js%20Mastery%20Workshop'
+}
+</script>
+
 <template>
-  <div class="event-detail-page">
-    <button @click="$router.push('/browse/events')" class="btn-back">&larr; Back to Events</button>
-    <div class="detail-header">
+  <article class="event-detail-page">
+    <router-link to="/browse/events" class="btn-back">← Back to Events</router-link>
+
+    <header class="detail-header">
       <div class="header-content">
-        <span class="event-tag">Community Event</span>
-        <h1>Community Gathering {{ $route.params.id }}</h1>
+        <span class="event-tag">Workshop &amp; Training</span>
+        <h1>Vue.js Mastery Workshop</h1>
         <div class="meta-info">
           <div class="meta-item">
-            <span class="icon">📅</span>
-            <span>October 15, 2026</span>
+            <span aria-hidden="true">📅</span><span>12 Oktober 2026</span>
           </div>
           <div class="meta-item">
-            <span class="icon">📍</span>
-            <span>Main Auditorium, City Center</span>
+            <span aria-hidden="true">📍</span><span>Tech Hub, Jakarta Pusat</span>
           </div>
-          <div class="meta-item">
-            <span class="icon">👥</span>
-            <span>500+ Attendees</span>
-          </div>
+          <div class="meta-item"><span aria-hidden="true">👥</span><span>150 peserta</span></div>
         </div>
       </div>
-    </div>
+    </header>
 
     <div class="detail-grid grid-asymmetric">
-      <div class="main-desc">
+      <section class="main-desc">
+        <span class="section-eyebrow">Learn by building</span>
         <h2>About This Event</h2>
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris. Vivamus hendrerit arcu
-          sed erat molestie vehicula. Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor. Ut in
-          nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor.
+          Build confidence with Vue.js in this practical, hands-on workshop. Together, we will
+          explore Vue 3 fundamentals, the Composition API, component patterns, and the tools used to
+          turn an idea into a polished interactive application.
         </p>
         <p>
-          Suspendisse dictum feugiat nisl ut dapibus. Mauris iaculis porttitor posuere. Praesent id
-          metus massa, ut blandit odio. Proin quis tortor orci. Etiam at risus et justo dignissim
-          congue. Donec congue lacinia dui, a porttitor lectus condimentum laoreet. Nunc eu ullamcorper orci.
+          Bring a laptop and questions. Whether you are strengthening your frontend foundation or
+          starting your next project, you will leave with techniques you can put to use right away.
         </p>
 
-        <h2>Agenda</h2>
-        <ul class="agenda-list">
-          <li><strong>09:00 AM</strong> Registration & Welcome Coffee</li>
-          <li><strong>10:00 AM</strong> Opening Keynote Speech</li>
-          <li><strong>11:30 AM</strong> Networking Session</li>
-          <li><strong>01:00 PM</strong> Closing Remarks</li>
-        </ul>
-      </div>
+        <h2 class="agenda-heading">Event Agenda</h2>
+        <ol class="agenda-list">
+          <li><time>09.00</time><span>Registration &amp; welcome coffee</span></li>
+          <li><time>09.30</time><span>Vue 3 essentials and project setup</span></li>
+          <li><time>10.45</time><span>Composition API and reusable components</span></li>
+          <li><time>13.00</time><span>Build a hands-on event discovery feature</span></li>
+          <li><time>15.00</time><span>Q&amp;A, project sharing, and closing</span></li>
+        </ol>
+      </section>
 
-      <div class="sidebar sticky-pane">
+      <aside class="sidebar sticky-pane">
         <div class="ticket-card">
-          <h3>Registration</h3>
+          <span class="ticket-kicker">Save your seat</span>
+          <h2>Registration</h2>
           <p class="price">Free</p>
-          <p class="ticket-desc">Secure your spot today before it runs out.</p>
-          <a
-            class="btn-register"
-            href="mailto:hello@gatherly.com?subject=Registration%20for%20Community%20Gathering"
-          >
-            Register Now
-          </a>
-          <p class="spots">Only 45 spots left!</p>
+          <p class="ticket-desc">
+            Join us for a full day of practical learning and connect with fellow Vue developers.
+          </p>
+          <button class="btn-register" type="button" @click="registerForEvent">Register Now</button>
+          <p class="spots">Only 12 seats left!</p>
         </div>
-      </div>
+      </aside>
     </div>
-  </div>
+  </article>
 </template>
 
 <style scoped>
+.event-detail-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4) 0 var(--space-12);
+}
+
 .btn-back {
-  background: none;
-  border: none;
-  color: #666;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  margin-bottom: 2rem;
-  transition: color 0.2s;
-  padding: 0;
+  display: inline-block;
+  margin-bottom: var(--space-6);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .btn-back:hover {
-  color: #6644ff;
+  color: var(--primary);
 }
 
 .detail-header {
-  background: #fdfdfd;
-  border-radius: 20px;
-  border: 1px solid #f0f0f0;
-  padding: 4rem 3rem;
-  margin-bottom: 3rem;
+  margin-bottom: var(--space-8);
+  padding: clamp(2rem, 5vw, 4rem);
+  background: linear-gradient(120deg, #fbfaff 0%, #f3f0ff 100%);
+  border: 1px solid #eeebff;
+  border-radius: 22px;
 }
 
 .header-content {
-  max-width: 800px;
+  max-width: 850px;
 }
 
-.event-tag {
+.event-tag,
+.ticket-kicker {
   display: inline-block;
-  background: rgba(102, 68, 255, 0.1);
-  color: #6644ff;
-  padding: 0.4rem 1rem;
-  border-radius: 50px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .header-content h1 {
-  color: #1c1948;
-  font-size: 2.8rem;
-  margin-bottom: 2rem;
-  line-height: 1.2;
+  margin: var(--space-3) 0 var(--space-6);
+  color: var(--text-main);
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1.1;
 }
 
 .meta-info {
   display: flex;
   flex-wrap: wrap;
-  gap: 2rem;
+  gap: var(--space-4) var(--space-8);
 }
 
 .meta-item {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: var(--space-2);
   color: #555;
   font-weight: 500;
-  font-size: 1.05rem;
 }
 
 .grid-asymmetric {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
   gap: var(--space-12);
 }
 
@@ -135,42 +139,66 @@
   min-width: 0;
 }
 
-.main-desc h2 {
-  color: #1c1948;
-  margin-bottom: 1.5rem;
-  font-size: 1.8rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.section-eyebrow {
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.main-desc h2::before {
-  content: "";
-  display: block;
+.main-desc h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 var(--space-4);
+  color: var(--text-main);
+  font-size: 1.7rem;
+  font-weight: 750;
+}
+
+.main-desc > h2::before {
   width: 20px;
   height: 4px;
-  background: #6644ff;
+  background: var(--primary);
   border-radius: 2px;
+  content: '';
 }
 
 .main-desc p {
-  color: #444;
+  margin: 0 0 var(--space-4);
+  color: #4b4b55;
+  font-size: 1.02rem;
   line-height: 1.8;
-  margin-bottom: 1.5rem;
-  font-size: 1.05rem;
+}
+
+.main-desc .agenda-heading {
+  margin-top: var(--space-8);
 }
 
 .agenda-list {
-  list-style: none;
-  padding: 0;
+  display: grid;
+  gap: var(--space-2);
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .agenda-list li {
-  padding: 1rem 0;
-  border-bottom: 1px solid #f0f0f0;
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: var(--space-3);
+  padding: var(--space-4);
   color: #444;
-  font-size: 1.05rem;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+.agenda-list time {
+  color: var(--primary);
+  font-weight: 700;
 }
 
 .sidebar {
@@ -184,45 +212,44 @@
 }
 
 .ticket-card {
-  background: white;
-  padding: 2.5rem;
-  border-radius: 16px;
-  border: 1px solid #f0f0f0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  padding: var(--space-8);
   text-align: center;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  box-shadow: 0 12px 35px rgba(28, 25, 72, 0.06);
 }
 
-.ticket-card h3 {
-  color: #1c1948;
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+.ticket-card h2 {
+  margin: var(--space-2) 0;
+  color: var(--text-main);
+  font-size: 1.4rem;
 }
 
 .price {
+  margin: 0 0 var(--space-2);
+  color: var(--primary);
   font-size: 2.8rem;
   font-weight: 800;
-  color: #6644ff;
-  margin-bottom: 0.5rem;
 }
 
 .ticket-desc {
-  color: #666;
-  margin-bottom: 2rem;
+  margin: 0 0 var(--space-6);
+  color: var(--text-muted);
+  line-height: 1.6;
 }
 
 .btn-register {
-  display: block;
   width: 100%;
-  padding: 1.2rem;
+  padding: var(--space-4);
+  color: #fff;
   background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  border: 0;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.3s;
-  text-decoration: none;
+  font: inherit;
+  font-weight: 700;
+  transition: background-color 0.2s ease;
 }
 
 .btn-register:hover {
@@ -230,10 +257,10 @@
 }
 
 .spots {
-  margin-top: 1.5rem;
-  color: #e63946;
-  font-weight: 600;
-  font-size: 0.95rem;
+  margin: var(--space-4) 0 0;
+  color: #c23b4a;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 @media (max-width: 900px) {
@@ -245,8 +272,5 @@
   .sticky-pane {
     position: static;
   }
-
-  .detail-header { padding: 3rem 2rem; }
-  .header-content h1 { font-size: 2.2rem; }
 }
 </style>

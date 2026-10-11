@@ -16,12 +16,13 @@ const menus = [
       {
         name: 'Event List',
         path: '/browse/events',
-        children: [{ name: 'Event Detail (Sample)', path: '/browse/events/1' }]
+        children: [{ name: 'Event Detail (Sample)', path: '/browse/events/1' }],
       },
-      { name: 'Category', path: '/browse/category' }
-    ]
+      { name: 'Category', path: '/browse/category' },
+    ],
   },
-  { name: 'Contact', path: '/contact' }
+  { name: 'Contact', path: '/contact' },
+  { name: 'Organizer Dashboard', path: '/dashboard' },
 ]
 
 const handleScroll = () => {
@@ -32,7 +33,7 @@ watch(
   () => route.path,
   () => {
     isMenuOpen.value = false
-  }
+  },
 )
 
 onMounted(() => {
@@ -75,8 +76,7 @@ onUnmounted(() => {
             class="nav-link"
             :class="{
               active:
-                route.path === menu.path ||
-                (menu.path !== '/' && route.path.startsWith(menu.path))
+                route.path === menu.path || (menu.path !== '/' && route.path.startsWith(menu.path)),
             }"
           >
             {{ menu.name }}
@@ -341,7 +341,9 @@ Inspired by user reference image
   text-decoration: none;
   color: #333; /* text gelap */
   font-size: 0.95rem;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
