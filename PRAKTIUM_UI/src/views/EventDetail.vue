@@ -1,4 +1,7 @@
 <script setup>
+import AppButton from '@/components/ui/AppButton.vue'
+import AppCard from '@/components/ui/AppCard.vue'
+
 const registerForEvent = () => {
   window.location.href =
     'mailto:hello@gatherly.com?subject=Registration%20for%20Vue.js%20Mastery%20Workshop'
@@ -50,16 +53,16 @@ const registerForEvent = () => {
       </section>
 
       <aside class="sidebar sticky-pane">
-        <div class="ticket-card">
+        <AppCard class="ticket-card">
           <span class="ticket-kicker">Save your seat</span>
           <h2>Registration</h2>
           <p class="price">Free</p>
           <p class="ticket-desc">
             Join us for a full day of practical learning and connect with fellow Vue developers.
           </p>
-          <button class="btn-register" type="button" @click="registerForEvent">Register Now</button>
+          <AppButton class="btn-register" @click="registerForEvent">Register Now</AppButton>
           <p class="spots">Only 12 seats left!</p>
-        </div>
+        </AppCard>
       </aside>
     </div>
   </article>
@@ -212,10 +215,8 @@ const registerForEvent = () => {
 }
 
 .ticket-card {
-  padding: var(--space-8);
+  --app-card-padding: var(--space-8);
   text-align: center;
-  background: #fff;
-  border: 1px solid var(--border-color);
   border-radius: 18px;
   box-shadow: 0 12px 35px rgba(28, 25, 72, 0.06);
 }
@@ -242,18 +243,7 @@ const registerForEvent = () => {
 .btn-register {
   width: 100%;
   padding: var(--space-4);
-  color: #fff;
-  background: var(--primary);
-  border: 0;
   border-radius: 10px;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 700;
-  transition: background-color 0.2s ease;
-}
-
-.btn-register:hover {
-  background: var(--primary-hover);
 }
 
 .spots {

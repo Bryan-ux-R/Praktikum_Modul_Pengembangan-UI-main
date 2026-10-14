@@ -1,4 +1,16 @@
 <script setup>
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import CategoryFilter from '@/components/event/CategoryFilter.vue'
+import EventCard from '@/components/event/EventCard.vue'
+import SearchBar from '@/components/event/SearchBar.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import AppCard from '@/components/ui/AppCard.vue'
+
+const router = useRouter()
+const searchQuery = ref('')
+const selectedCategory = ref('')
+
 const events = [
   {
     id: 1,
@@ -55,6 +67,36 @@ const events = [
       'Share what you are building, get useful feedback, and meet the people shaping the local tech scene.',
   },
 ]
+
+const categories = [...new Set(events.map((event) => event.category))]
+
+const filteredEvents = computed(() => {
+  const query = searchQuery.value.trim().toLocaleLowerCase()
+
+  return events.filter((event) => {
+    const matchesCategory = !selectedCategory.value || event.category === selectedCategory.value
+    const searchableText = [
+      event.title,
+      event.description,
+      event.location,
+      event.category,
+      event.date,
+    ]
+      .join(' ')
+      .toLocaleLowerCase()
+
+    return matchesCategory && (!query || searchableText.includes(query))
+  })
+})
+
+const clearFilters = () => {
+  searchQuery.value = ''
+  selectedCategory.value = ''
+}
+
+const viewEvent = (eventId) => {
+  router.push({ name: 'event-detail', params: { id: eventId } })
+}
 </script>
 
 <template>
@@ -65,24 +107,30 @@ const events = [
       <p class="section-desc">Discover the latest gatherings and activities happening near you.</p>
     </header>
 
-    <div class="event-grid">
-      <article v-for="event in events" :key="event.id" class="event-card">
-        <div class="event-body">
-          <div class="event-meta">
-            <span class="event-date">{{ event.date }}</span>
-            <span class="event-category">{{ event.category }}</span>
-          </div>
-          <h2>{{ event.title }}</h2>
-          <p class="event-loc"><span aria-hidden="true">📍</span> {{ event.location }}</p>
-          <p class="event-desc">{{ event.description }}</p>
-          <div class="card-footer">
-            <router-link :to="`/browse/events/${event.id}`" class="btn-link">
-              View Event Details <span aria-hidden="true">→</span>
-            </router-link>
-          </div>
-        </div>
-      </article>
+    <section class="event-controls" aria-label="Search and filter events">
+      <SearchBar v-model="searchQuery" />
+      <CategoryFilter v-model="selectedCategory" :categories="categories" />
+    </section>
+
+    <p class="results-count" role="status" aria-live="polite">
+      {{ filteredEvents.length }} {{ filteredEvents.length === 1 ? 'event' : 'events' }} found
+    </p>
+
+    <div v-if="filteredEvents.length" class="event-grid">
+      <EventCard
+        v-for="event in filteredEvents"
+        :key="event.id"
+        :event="event"
+        @view-detail="viewEvent"
+      />
     </div>
+
+    <AppCard v-else tag="section" class="empty-state" aria-live="polite">
+      <span class="empty-icon" aria-hidden="true">⌕</span>
+      <h2>No events found</h2>
+      <p>Try another search or choose a different category.</p>
+      <AppButton variant="secondary" @click="clearFilters">Clear filters</AppButton>
+    </AppCard>
   </section>
 </template>
 
@@ -119,105 +167,55 @@ const events = [
   font-size: 1.05rem;
 }
 
-.event-grid {
+.event-controls {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--space-6);
-}
-
-.event-card {
-  display: flex;
-  min-width: 0;
-  background: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.event-card:hover {
-  transform: translateY(-4px);
-  border-color: #c9c0ff;
-  box-shadow: 0 14px 30px rgba(28, 25, 72, 0.08);
-}
-
-.event-body {
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  padding: var(--space-6);
-}
-
-.event-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
+  gap: var(--space-4);
   margin-bottom: var(--space-4);
 }
 
-.event-date {
-  padding: var(--space-1) var(--space-3);
-  color: var(--primary);
-  background: #f0edff;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.event-category {
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.event-body h2 {
-  margin: 0 0 var(--space-3);
-  color: var(--text-main);
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.event-loc {
+.results-count {
   margin: 0 0 var(--space-4);
   color: var(--text-muted);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
-.event-desc {
-  flex-grow: 1;
-  margin: 0 0 var(--space-6);
-  color: #555;
-  font-size: 0.95rem;
-  line-height: 1.65;
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  align-items: stretch;
+  gap: var(--space-6);
 }
 
-.card-footer {
-  padding-top: var(--space-4);
-  border-top: 1px solid #f0f0f0;
+.empty-state {
+  padding: clamp(28px, 6vw, 56px) 24px;
+  text-align: center;
 }
 
-.btn-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--text-main);
-  font-weight: 700;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.btn-link:hover {
+.empty-icon {
+  display: inline-grid;
+  width: 52px;
+  height: 52px;
+  margin-bottom: var(--space-3);
+  place-items: center;
   color: var(--primary);
+  background: #f0edff;
+  border-radius: 16px;
+  font-size: 2rem;
 }
 
-@media (max-width: 380px) {
+.empty-state h2 {
+  margin: 0 0 var(--space-2);
+  color: var(--text-main);
+  font-size: 1.35rem;
+}
+
+.empty-state p {
+  margin: 0 0 var(--space-6);
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+@media (max-width: 650px) {
   .event-grid {
     grid-template-columns: 1fr;
   }

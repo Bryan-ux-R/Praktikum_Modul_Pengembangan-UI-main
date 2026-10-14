@@ -6,8 +6,8 @@ import Breadcrumb from '@/components/app/Breadcrumb.vue';
 <template>
   <div class="app-layout">
     <Navbar />
-    <main class="main-content">
-      <Breadcrumb v-if="$route.name !== 'home'" />
+    <main class="main-content" :class="{ 'home-content': $route.name === 'home' }">
+      <Breadcrumb />
       <router-view />
     </main>
   </div>
@@ -24,5 +24,22 @@ import Breadcrumb from '@/components/app/Breadcrumb.vue';
   flex: 1;
   width: 100%;
   padding: 2rem clamp(16px, 4vw, 64px);
+}
+
+.main-content.home-content {
+  padding: 20px clamp(16px, 2.3vw, 32px) 0;
+}
+
+.home-content :deep(.breadcrumb) {
+  margin-bottom: 10px;
+  padding: 0 10px;
+  background: transparent;
+  border-radius: 0;
+  font-size: 0.8rem;
+}
+
+.home-content :deep(.active-crumb) {
+  color: #a3a3a3;
+  font-weight: 400;
 }
 </style>

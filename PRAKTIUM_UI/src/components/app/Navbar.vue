@@ -211,7 +211,7 @@ onUnmounted(() => {
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0.85rem 2rem;
+  padding: 0.35rem 1rem;
 }
 
 .navbar.scrolled {
@@ -227,7 +227,7 @@ onUnmounted(() => {
   gap: 0.75rem;
   text-decoration: none;
   color: var(--text-white, #fff);
-  padding-right: 2rem;
+  padding-right: 0.5rem;
   transition: transform 0.3s ease;
 }
 
@@ -252,7 +252,7 @@ onUnmounted(() => {
 .nav-menu {
   display: flex;
   align-items: center;
-  gap: 2.5rem;
+  gap: 1.25rem;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -265,7 +265,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   height: 100%;
-  padding: 1rem 0; /* Memberi ruang hover */
+  padding: 0.25rem 0;
 }
 
 .nav-link {
@@ -276,7 +276,8 @@ onUnmounted(() => {
   color: var(--text-white, #fff);
   font-size: 0.95rem;
   font-weight: 500;
-  padding: 0.5rem 1.25rem;
+  padding: 0.35rem 0.65rem;
+  white-space: nowrap;
   border-radius: 10px;
   transition: all 0.3s ease;
 }
@@ -393,7 +394,7 @@ Inspired by user reference image
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 0.4rem;
 }
 
 .lang-selector {
@@ -426,8 +427,8 @@ Inspired by user reference image
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 10px;
@@ -443,7 +444,7 @@ Inspired by user reference image
 
 @media (max-width: 900px) {
   .nav-menu {
-    gap: 1rem;
+    gap: 0.35rem;
   }
 }
 
@@ -456,7 +457,7 @@ Inspired by user reference image
     right: 0;
     align-items: stretch;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.15rem;
     padding: 0.75rem 1rem 1rem;
     background: #1c1948;
     box-shadow: 0 12px 20px rgba(0, 0, 0, 0.16);
