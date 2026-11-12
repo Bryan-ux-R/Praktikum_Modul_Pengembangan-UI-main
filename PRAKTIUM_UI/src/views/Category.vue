@@ -1,36 +1,11 @@
-<script setup>
-import { computed } from 'vue'
-import { useEvents } from '@/composables/useEvents'
-
-const { activeEvents, categories } = useEvents()
-
-const categoryCards = computed(() =>
-  categories.value.map((name) => ({
-    name,
-    count: activeEvents.value.filter((event) => event.category === name).length,
-    icon:
-      {
-        'Music & Concerts': '🎵',
-        Technology: '💻',
-        'Art & Design': '🎨',
-        Business: '💼',
-        'Health & Wellness': '🧘',
-        'Food & Drink': '🍔',
-        Community: '◇',
-        'Workshop & Training': '✦',
-      }[name] || '◇',
-  })),
-)
-</script>
-
 <template>
   <div class="category-page">
     <h2 class="section-title">Explore by Category</h2>
-    <div v-if="categoryCards.length" class="category-grid">
+    <div class="category-grid">
       <router-link
-        v-for="cat in categoryCards"
-        :key="cat.name"
-        :to="{ name: 'events', query: { category: cat.name } }"
+        v-for="(cat, index) in categories"
+        :key="index"
+        :to="{ name: 'events' }"
         class="category-card"
       >
         <div class="cat-icon">{{ cat.icon }}</div>
@@ -38,12 +13,19 @@ const categoryCards = computed(() =>
         <p>{{ cat.count }} Events</p>
       </router-link>
     </div>
-    <div v-else class="category-empty">
-      <p>There are no event categories to explore yet.</p>
-      <router-link to="/dashboard/events">Create an event</router-link>
-    </div>
   </div>
 </template>
+
+<script setup>
+const categories = [
+  { name: 'Music & Concerts', icon: '🎵', count: 24 },
+  { name: 'Technology', icon: '💻', count: 18 },
+  { name: 'Art & Design', icon: '🎨', count: 12 },
+  { name: 'Business', icon: '💼', count: 30 },
+  { name: 'Health & Wellness', icon: '🧘', count: 15 },
+  { name: 'Food & Drink', icon: '🍔', count: 22 }
+];
+</script>
 
 <style scoped>
 .section-title {
@@ -91,24 +73,5 @@ const categoryCards = computed(() =>
 .category-card p {
   color: #888;
   font-size: 0.9rem;
-}
-
-.category-empty {
-  padding: 2rem;
-  color: var(--text-muted);
-  background: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  text-align: center;
-}
-
-.category-empty p {
-  margin: 0 0 0.75rem;
-}
-
-.category-empty a {
-  color: var(--primary);
-  font-weight: 700;
-  text-decoration: none;
 }
 </style>
