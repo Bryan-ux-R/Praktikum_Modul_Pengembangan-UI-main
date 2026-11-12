@@ -10,6 +10,14 @@ defineProps({
     default: 'button',
     validator: (value) => ['button', 'submit', 'reset'].includes(value),
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 defineEmits(['click'])
@@ -20,8 +28,11 @@ defineEmits(['click'])
     class="app-button"
     :class="`app-button--${variant}`"
     :type="type"
+    :disabled="disabled || loading"
+    :aria-busy="loading"
     @click="$emit('click', $event)"
   >
+    <span v-if="loading" class="app-button__spinner" aria-hidden="true"></span>
     <slot />
   </button>
 </template>
@@ -82,5 +93,21 @@ defineEmits(['click'])
   cursor: not-allowed;
   opacity: 0.6;
   transform: none;
+}
+
+.app-button__spinner {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: app-button-spin 0.7s linear infinite;
+}
+
+@keyframes app-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

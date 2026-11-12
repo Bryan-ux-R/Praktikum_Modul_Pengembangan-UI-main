@@ -1,12 +1,30 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { useEvents } from '@/composables/useEvents'
 
 const route = useRoute()
-const { events, getRegistrationById, isEventDone, formatEventDate } = useEvents()
+const {
+  events,
+  getRegistrationById,
+  isEventDone,
+  formatEventDate,
+  fetchEvents,
+  loading,
+  error: apiError,
+} = useEvents()
+
+const loadEvents = async () => {
+  try {
+    await fetchEvents()
+  } catch {
+    // The ticket snapshot remains available if the event API is offline.
+  }
+}
+
+onMounted(loadEvents)
 
 const registration = computed(() => getRegistrationById(String(route.params.ticketId)))
 const event = computed(() =>
@@ -22,6 +40,11 @@ const printTicket = () => window.print()
 
 <template>
   <section v-if="registration" class="receipt-page">
+    <div v-if="apiError" class="ticket-api-warning" role="alert">
+      <span>{{ apiError }} The ticket saved in this browser is still available.</span>
+      <AppButton variant="secondary" :loading="loading" @click="loadEvents">Try again</AppButton>
+    </div>
+
     <div class="receipt-heading">
       <span class="success-mark" aria-hidden="true">✓</span>
       <span class="page-eyebrow">YOUR TICKET</span>
@@ -101,6 +124,21 @@ const printTicket = () => window.print()
   max-width: 920px;
   margin: 0 auto;
   padding: var(--space-8) 0 var(--space-12);
+}
+
+.ticket-api-warning {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: 12px 16px;
+  color: #a12533;
+  background: #fff3f4;
+  border: 1px solid #f1c8cc;
+  border-radius: 10px;
+  line-height: 1.5;
 }
 
 .receipt-heading {

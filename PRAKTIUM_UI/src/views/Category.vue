@@ -1,8 +1,19 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import AppButton from '@/components/ui/AppButton.vue'
 import { useEvents } from '@/composables/useEvents'
 
-const { activeEvents, categories } = useEvents()
+const { activeEvents, categories, fetchEvents, loading, error } = useEvents()
+
+const loadEvents = async () => {
+  try {
+    await fetchEvents()
+  } catch {
+    // The error state below presents the composable's API error.
+  }
+}
+
+onMounted(loadEvents)
 
 const categoryCards = computed(() =>
   categories.value.map((name) => ({
@@ -26,7 +37,12 @@ const categoryCards = computed(() =>
 <template>
   <div class="category-page">
     <h2 class="section-title">Explore by Category</h2>
-    <div v-if="categoryCards.length" class="category-grid">
+    <div v-if="loading" class="category-empty" role="status">Loading event categories…</div>
+    <div v-else-if="error" class="category-empty category-error" role="alert">
+      <p>{{ error }}</p>
+      <AppButton :loading="loading" @click="loadEvents">Try again</AppButton>
+    </div>
+    <div v-else-if="categoryCards.length" class="category-grid">
       <router-link
         v-for="cat in categoryCards"
         :key="cat.name"
@@ -110,5 +126,10 @@ const categoryCards = computed(() =>
   color: var(--primary);
   font-weight: 700;
   text-decoration: none;
+}
+
+.category-error p {
+  margin-bottom: 1rem;
+  overflow-wrap: anywhere;
 }
 </style>

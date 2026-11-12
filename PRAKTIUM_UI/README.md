@@ -37,12 +37,24 @@ npm run dev
 npm run build
 ```
 
-### Event State Management
+### Event API Configuration
 
-The organizer dashboard at `/dashboard/events` lets you create events, mark them as completed,
-and delete them after confirming the action. Event data is shared across the dashboard, event
-list, categories, and detail pages through the `useEvents` composable and is saved in browser
-LocalStorage under the `gatherly-events` key.
+Copy `.env.example` to `.env` and set `VITE_API_URL` to the base URL of your MockAPI project
+(for example, the project URL ending in `/api/v1`; do not include a made-up URL). The application
+uses the `events` resource and supports listing events, loading an event by ID, creating events,
+and deleting events. Restart Vite after changing `.env`.
+
+The API event fields are `id`, `title`, `cat`, `date`, `loc`, `quota`, `desc`, and `done`. The UI
+maps these to its existing category, location, description, and available-seat fields. Until a URL
+is configured, API-backed screens show an actionable configuration error rather than pretending a
+server request succeeded.
+
+The organizer dashboard at `/dashboard/events` creates and deletes events through the API. Event
+data remains available in the shared `useEvents` state and browser LocalStorage cache under the
+`gatherly-events` key. The API methods requested for this module do not include PUT/PATCH, so the
+“Mark Complete” state remains a local override. Locally saved registrations are also subtracted
+from the server quota in this browser; synchronizing registrations or quota changes across devices
+requires a server-side update endpoint.
 
 ### Event Registration and Tickets
 

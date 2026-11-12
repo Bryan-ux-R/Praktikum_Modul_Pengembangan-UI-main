@@ -1,6 +1,11 @@
 import { computed, ref, watch } from 'vue'
 
 const storageKey = 'gatherly-events'
+const apiBaseUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '') || ''
+const pendingRequests = ref(0)
+const loading = computed(() => pendingRequests.value > 0)
+const error = ref('')
+let eventsRequest
 
 const initialEvents = [
   {
@@ -158,6 +163,112 @@ const initialState = loadState()
 const events = ref(initialState.events)
 const userRegistrations = ref(initialState.registrations)
 
+const getEventsEndpoint = () => {
+  if (!apiBaseUrl) {
+    throw new Error(
+      'MockAPI is not configured. Add VITE_API_URL to the .env file and restart Vite.',
+    )
+  }
+
+  return apiBaseUrl.endsWith('/events') ? apiBaseUrl : `${apiBaseUrl}/events`
+}
+
+const readResponseBody = async (response) => {
+  const body = await response.text()
+
+  if (!body) {
+    return null
+  }
+
+  try {
+    return JSON.parse(body)
+  } catch (parseError) {
+    if (parseError instanceof SyntaxError) {
+      return body
+    }
+
+    throw parseError
+  }
+}
+
+const ensureResponseOk = (response, body, operation) => {
+  if (response.ok) {
+    return
+  }
+
+  const detail =
+    body && typeof body === 'object' && typeof body.message === 'string' ? `: ${body.message}` : ''
+  throw new Error(`${operation} failed (HTTP ${response.status})${detail}`)
+}
+
+const withApiRequest = async (request) => {
+  pendingRequests.value += 1
+  error.value = ''
+
+  try {
+    return await request()
+  } catch (requestError) {
+    error.value = requestError instanceof Error ? requestError.message : 'The API request failed.'
+    throw requestError
+  } finally {
+    pendingRequests.value -= 1
+  }
+}
+
+const normalizeApiEvent = (data) => {
+  const category = data?.cat ?? data?.category
+  const location = data?.loc ?? data?.location
+  const description = data?.desc ?? data?.description
+
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    (typeof data.id !== 'string' && typeof data.id !== 'number') ||
+    typeof data.title !== 'string' ||
+    !data.title.trim() ||
+    typeof data.date !== 'string' ||
+    !data.date.trim() ||
+    typeof category !== 'string' ||
+    typeof location !== 'string' ||
+    typeof description !== 'string' ||
+    ![true, false, 'true', 'false'].includes(data.done)
+  ) {
+    throw new Error('The server returned an event with an invalid format.')
+  }
+
+  const quota = Number(data.quota ?? data.remainingSeats)
+
+  if (!Number.isFinite(quota) || quota < 0) {
+    throw new Error(`The server returned an invalid quota for event "${data.title}".`)
+  }
+
+  const registeredCount = userRegistrations.value.filter(
+    (registration) => String(registration.eventId) === String(data.id),
+  ).length
+  const cachedEvent = events.value.find((event) => String(event.id) === String(data.id))
+
+  return {
+    id: data.id,
+    title: data.title,
+    category,
+    date: data.date,
+    location,
+    description,
+    done: data.done === true || data.done === 'true' || Boolean(cachedEvent?.done),
+    remainingSeats: Math.max(0, quota - registeredCount),
+  }
+}
+
+const eventToApiData = (eventData) => ({
+  title: eventData.title.trim(),
+  cat: eventData.category.trim(),
+  date: eventData.date,
+  loc: eventData.location.trim(),
+  quota: 30,
+  desc: eventData.description.trim(),
+  done: false,
+})
+
 watch(
   [events, userRegistrations],
   ([updatedEvents, updatedRegistrations]) => {
@@ -193,6 +304,84 @@ const getRegistrationForEvent = (eventId) =>
 
 const getRegistrationById = (registrationId) =>
   userRegistrations.value.find((registration) => registration.id === registrationId)
+
+const fetchEvents = () => {
+  if (eventsRequest) {
+    return eventsRequest
+  }
+
+  eventsRequest = withApiRequest(async () => {
+    const response = await fetch(getEventsEndpoint(), {
+      headers: { Accept: 'application/json' },
+    })
+    const body = await readResponseBody(response)
+    ensureResponseOk(response, body, 'Loading events')
+
+    if (!Array.isArray(body)) {
+      throw new Error('The server returned an invalid event list.')
+    }
+
+    events.value = body.map(normalizeApiEvent)
+    return events.value
+  }).finally(() => {
+    eventsRequest = undefined
+  })
+
+  return eventsRequest
+}
+
+const fetchEventById = (eventId) =>
+  withApiRequest(async () => {
+    const response = await fetch(`${getEventsEndpoint()}/${encodeURIComponent(String(eventId))}`, {
+      headers: { Accept: 'application/json' },
+    })
+
+    if (response.status === 404) {
+      const eventIndex = events.value.findIndex((item) => String(item.id) === String(eventId))
+
+      if (eventIndex !== -1) {
+        events.value.splice(eventIndex, 1)
+      }
+
+      error.value = 'This event could not be found or has been removed.'
+      return null
+    }
+
+    const body = await readResponseBody(response)
+    ensureResponseOk(response, body, 'Loading event')
+    if (String(body?.id) !== String(eventId)) {
+      throw new Error('The server returned a different event than the one requested.')
+    }
+
+    const event = normalizeApiEvent(body)
+    const eventIndex = events.value.findIndex((item) => String(item.id) === String(event.id))
+
+    if (eventIndex === -1) {
+      events.value.unshift(event)
+    } else {
+      events.value.splice(eventIndex, 1, event)
+    }
+
+    return event
+  })
+
+const createEvent = (eventData) =>
+  withApiRequest(async () => {
+    const response = await fetch(getEventsEndpoint(), {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(eventToApiData(eventData)),
+    })
+    const body = await readResponseBody(response)
+    ensureResponseOk(response, body, 'Creating event')
+
+    const event = normalizeApiEvent(body)
+    events.value.unshift(event)
+    return event
+  })
 
 const isEventDone = (eventId) =>
   Boolean(events.value.find((event) => String(event.id) === String(eventId))?.done)
@@ -294,19 +483,30 @@ const completeEvent = (eventId) => {
   return true
 }
 
-const deleteEvent = (eventId) => {
-  const eventIndex = events.value.findIndex((event) => String(event.id) === String(eventId))
+const deleteEvent = (eventId) =>
+  withApiRequest(async () => {
+    const eventIndex = events.value.findIndex((event) => String(event.id) === String(eventId))
 
-  if (eventIndex === -1) {
-    return false
-  }
+    if (eventIndex === -1) {
+      return false
+    }
 
-  events.value.splice(eventIndex, 1)
-  userRegistrations.value = userRegistrations.value.filter(
-    (registration) => String(registration.eventId) !== String(eventId),
-  )
-  return true
-}
+    const response = await fetch(`${getEventsEndpoint()}/${encodeURIComponent(String(eventId))}`, {
+      method: 'DELETE',
+      headers: { Accept: 'application/json' },
+    })
+
+    if (!response.ok) {
+      const body = await readResponseBody(response)
+      ensureResponseOk(response, body, 'Deleting event')
+    }
+
+    events.value.splice(eventIndex, 1)
+    userRegistrations.value = userRegistrations.value.filter(
+      (registration) => String(registration.eventId) !== String(eventId),
+    )
+    return true
+  })
 
 const formatEventDate = (date) => {
   const parsedDate = new Date(date)
@@ -331,11 +531,16 @@ export function useEvents() {
     categories,
     userRegistrations,
     storageError,
+    loading,
+    error,
     isUserRegistered,
     getRegistrationForEvent,
     getRegistrationById,
     isEventDone,
     addEvent,
+    fetchEvents,
+    fetchEventById,
+    createEvent,
     completeEvent,
     deleteEvent,
     registerAttendee,
