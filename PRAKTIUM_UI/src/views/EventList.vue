@@ -1,79 +1,23 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import CategoryFilter from '@/components/event/CategoryFilter.vue'
 import EventCard from '@/components/event/EventCard.vue'
 import SearchBar from '@/components/event/SearchBar.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import { useEvents } from '@/composables/useEvents'
 
 const router = useRouter()
+const route = useRoute()
 const searchQuery = ref('')
-const selectedCategory = ref('')
-
-const events = [
-  {
-    id: 1,
-    date: '12 Oct 2026',
-    category: 'Workshop & Training',
-    title: 'Vue.js Mastery Workshop',
-    location: 'Tech Hub, Jakarta Pusat',
-    description:
-      'Level up your frontend skills with hands-on Vue 3, Composition API, and practical project sessions.',
-  },
-  {
-    id: 2,
-    date: '15 Oct 2026',
-    category: 'Technology',
-    title: 'Jakarta Design Systems Meetup',
-    location: 'M Bloc Space, Jakarta Selatan',
-    description:
-      'Meet local product teams and learn how thoughtful design systems help teams build better products.',
-  },
-  {
-    id: 3,
-    date: '18 Oct 2026',
-    category: 'Community',
-    title: 'Creative Founders Connect',
-    location: 'Taman Ismail Marzuki, Jakarta Pusat',
-    description:
-      'An evening to share ideas, connect with creative founders, and find your next collaborator.',
-  },
-  {
-    id: 4,
-    date: '22 Oct 2026',
-    category: 'Workshop & Training',
-    title: 'Product Discovery Sprint',
-    location: 'GoWork, Jakarta Selatan',
-    description:
-      'Practice research and rapid prototyping techniques for turning user needs into useful products.',
-  },
-  {
-    id: 5,
-    date: '25 Oct 2026',
-    category: 'Technology',
-    title: 'Frontend Performance Lab',
-    location: 'Tech Hub, Jakarta Pusat',
-    description:
-      'Explore practical ways to make modern web applications feel faster and work better for everyone.',
-  },
-  {
-    id: 6,
-    date: '29 Oct 2026',
-    category: 'Community',
-    title: 'Jakarta Makers Social',
-    location: 'M Bloc Space, Jakarta Selatan',
-    description:
-      'Share what you are building, get useful feedback, and meet the people shaping the local tech scene.',
-  },
-]
-
-const categories = [...new Set(events.map((event) => event.category))]
+const selectedCategory = ref(typeof route.query.category === 'string' ? route.query.category : '')
+const { activeEvents, categories } = useEvents()
 
 const filteredEvents = computed(() => {
   const query = searchQuery.value.trim().toLocaleLowerCase()
 
-  return events.filter((event) => {
+  return activeEvents.value.filter((event) => {
     const matchesCategory = !selectedCategory.value || event.category === selectedCategory.value
     const searchableText = [
       event.title,
@@ -87,6 +31,25 @@ const filteredEvents = computed(() => {
 
     return matchesCategory && (!query || searchableText.includes(query))
   })
+})
+
+watch(
+  () => route.query.category,
+  (category) => {
+    selectedCategory.value = typeof category === 'string' ? category : ''
+  },
+)
+
+watch(selectedCategory, (category) => {
+  const query = { ...route.query }
+
+  if (category) {
+    query.category = category
+  } else {
+    delete query.category
+  }
+
+  router.replace({ query })
 })
 
 const clearFilters = () => {
@@ -125,11 +88,17 @@ const viewEvent = (eventId) => {
       />
     </div>
 
-    <AppCard v-else tag="section" class="empty-state" aria-live="polite">
+    <AppCard v-else-if="activeEvents.length" tag="section" class="empty-state" aria-live="polite">
       <span class="empty-icon" aria-hidden="true">⌕</span>
       <h2>No events found</h2>
       <p>Try another search or choose a different category.</p>
       <AppButton variant="secondary" @click="clearFilters">Clear filters</AppButton>
+    </AppCard>
+    <AppCard v-else tag="section" class="empty-state" aria-live="polite">
+      <span class="empty-icon" aria-hidden="true">◇</span>
+      <h2>No active events yet</h2>
+      <p>Check back soon or create an event from the organizer dashboard.</p>
+      <AppButton @click="router.push('/dashboard/events')">Create an event</AppButton>
     </AppCard>
   </section>
 </template>

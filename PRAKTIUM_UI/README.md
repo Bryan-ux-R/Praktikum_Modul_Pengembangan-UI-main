@@ -37,6 +37,13 @@ npm run dev
 npm run build
 ```
 
+### Event State Management
+
+The organizer dashboard at `/dashboard/events` lets you create events, mark them as completed,
+and delete them after confirming the action. Event data is shared across the dashboard, event
+list, categories, and detail pages through the `useEvents` composable and is saved in browser
+LocalStorage under the `gatherly-events` key.
+
 ## Publish to GitHub Pages
 
 1. Push this project to a GitHub repository.
