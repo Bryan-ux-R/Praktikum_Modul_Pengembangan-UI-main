@@ -22,6 +22,13 @@ const route = useRoute()
           <span aria-hidden="true">▦</span> Overview
         </router-link>
         <router-link
+          to="/dashboard/events"
+          class="rail-link"
+          :class="{ active: route.path === '/dashboard/events' }"
+        >
+          <span aria-hidden="true">＋</span> Manage Events
+        </router-link>
+        <router-link
           to="/browse/events"
           class="rail-link"
           :class="{ active: route.path.startsWith('/browse/events') }"

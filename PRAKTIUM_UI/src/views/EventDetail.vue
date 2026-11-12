@@ -1,27 +1,41 @@
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import { useEvents } from '@/composables/useEvents'
+
+const route = useRoute()
+const { events, formatEventDate } = useEvents()
+const event = computed(() =>
+  events.value.find((item) => String(item.id) === String(route.params.id)),
+)
 
 const registerForEvent = () => {
-  window.location.href =
-    'mailto:hello@gatherly.com?subject=Registration%20for%20Vue.js%20Mastery%20Workshop'
+  if (!event.value) {
+    return
+  }
+
+  window.location.href = `mailto:hello@gatherly.com?subject=${encodeURIComponent(
+    `Registration for ${event.value.title}`,
+  )}`
 }
 </script>
 
 <template>
-  <article class="event-detail-page">
+  <article v-if="event" class="event-detail-page">
     <router-link to="/browse/events" class="btn-back">← Back to Events</router-link>
 
     <header class="detail-header">
       <div class="header-content">
-        <span class="event-tag">Workshop &amp; Training</span>
-        <h1>Vue.js Mastery Workshop</h1>
+        <span class="event-tag">{{ event.category }}</span>
+        <h1>{{ event.title }}</h1>
         <div class="meta-info">
           <div class="meta-item">
-            <span aria-hidden="true">📅</span><span>12 Oktober 2026</span>
+            <span aria-hidden="true">📅</span><span>{{ formatEventDate(event.date) }}</span>
           </div>
           <div class="meta-item">
-            <span aria-hidden="true">📍</span><span>Tech Hub, Jakarta Pusat</span>
+            <span aria-hidden="true">📍</span><span>{{ event.location }}</span>
           </div>
           <div class="meta-item"><span aria-hidden="true">👥</span><span>150 peserta</span></div>
         </div>
@@ -32,15 +46,8 @@ const registerForEvent = () => {
       <section class="main-desc">
         <span class="section-eyebrow">Learn by building</span>
         <h2>About This Event</h2>
-        <p>
-          Build confidence with Vue.js in this practical, hands-on workshop. Together, we will
-          explore Vue 3 fundamentals, the Composition API, component patterns, and the tools used to
-          turn an idea into a polished interactive application.
-        </p>
-        <p>
-          Bring a laptop and questions. Whether you are strengthening your frontend foundation or
-          starting your next project, you will leave with techniques you can put to use right away.
-        </p>
+        <p>{{ event.description }}</p>
+        <p>Join us at {{ event.location }} and connect with others who share your interests.</p>
 
         <h2 class="agenda-heading">Event Agenda</h2>
         <ol class="agenda-list">
@@ -57,18 +64,38 @@ const registerForEvent = () => {
           <span class="ticket-kicker">Save your seat</span>
           <h2>Registration</h2>
           <p class="price">Free</p>
-          <p class="ticket-desc">
-            Join us for a full day of practical learning and connect with fellow Vue developers.
-          </p>
-          <AppButton class="btn-register" @click="registerForEvent">Register Now</AppButton>
-          <p class="spots">Only 12 seats left!</p>
+          <p class="ticket-desc">Save your seat and join the community at {{ event.title }}.</p>
+          <AppButton v-if="!event.done" class="btn-register" @click="registerForEvent">
+            Register Now
+          </AppButton>
+          <p v-else class="completed-notice">This event has been completed.</p>
         </AppCard>
       </aside>
     </div>
   </article>
+  <AppCard v-else tag="section" class="event-not-found">
+    <h1>Event not found</h1>
+    <p>This event may have been removed or is no longer available.</p>
+    <router-link to="/browse/events" class="btn-back">Back to Events</router-link>
+  </AppCard>
 </template>
 
 <style scoped>
+.event-not-found {
+  max-width: 720px;
+  margin: var(--space-12) auto;
+  text-align: center;
+}
+
+.event-not-found h1 {
+  margin: 0 0 var(--space-2);
+}
+
+.event-not-found p {
+  margin: 0 0 var(--space-4);
+  color: var(--text-muted);
+}
+
 .event-detail-page {
   max-width: 1200px;
   margin: 0 auto;
@@ -246,9 +273,9 @@ const registerForEvent = () => {
   border-radius: 10px;
 }
 
-.spots {
+.completed-notice {
   margin: var(--space-4) 0 0;
-  color: #c23b4a;
+  color: #24633d;
   font-size: 0.9rem;
   font-weight: 700;
 }
