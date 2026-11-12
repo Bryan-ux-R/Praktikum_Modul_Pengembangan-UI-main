@@ -1,34 +1,37 @@
 <script setup>
-const metrics = [
-  { label: 'Published events', value: '06', note: 'Across your community', icon: '◇' },
-  { label: 'Total registrations', value: '248', note: 'Across all events', icon: '♧' },
-  { label: 'Next event', value: '12 Oct', note: 'Vue.js Mastery Workshop', icon: '▣' },
-]
+import { computed } from 'vue'
+import { useEvents } from '@/composables/useEvents'
 
-const upcomingEvents = [
+const { totalEvents, activeEvents, completedEvents, formatEventDate, storageError } = useEvents()
+
+const metrics = computed(() => [
   {
-    date: '12 OCT',
-    title: 'Vue.js Mastery Workshop',
-    category: 'Workshop',
-    attendees: '138 / 150',
+    label: 'Total events',
+    value: String(totalEvents.value).padStart(2, '0'),
+    note: 'Across your community',
+    icon: '◇',
   },
   {
-    date: '15 OCT',
-    title: 'Jakarta Design Systems Meetup',
-    category: 'Technology',
-    attendees: '64 / 100',
+    label: 'Active events',
+    value: String(activeEvents.value.length).padStart(2, '0'),
+    note: 'Open to attendees',
+    icon: '♧',
   },
   {
-    date: '18 OCT',
-    title: 'Creative Founders Connect',
-    category: 'Community',
-    attendees: '42 / 80',
+    label: 'Completed events',
+    value: String(completedEvents.value.length).padStart(2, '0'),
+    note: 'In your event archive',
+    icon: '▣',
   },
-]
+])
+
+const upcomingEvents = computed(() => activeEvents.value.slice(0, 3))
 </script>
 
 <template>
   <div class="dashboard-content">
+    <p v-if="storageError" class="storage-warning" role="alert">{{ storageError }}</p>
+
     <section class="metrics-grid" aria-label="Event summary">
       <article v-for="metric in metrics" :key="metric.label" class="metric-card">
         <div class="metric-top">
@@ -44,30 +47,38 @@ const upcomingEvents = [
       <header class="panel-header">
         <div>
           <span class="panel-kicker">YOUR CALENDAR</span>
-          <h2>Upcoming events</h2>
+          <h2>Active events</h2>
         </div>
-        <router-link to="/browse/events">View all <span aria-hidden="true">→</span></router-link>
+        <router-link to="/dashboard/events"
+          >Manage events <span aria-hidden="true">→</span></router-link
+        >
       </header>
 
       <div class="event-table">
         <div class="table-heading">
           <span>EVENT</span>
           <span>CATEGORY</span>
-          <span>REGISTRATIONS</span>
+          <span>DATE &amp; LOCATION</span>
         </div>
         <router-link
           v-for="event in upcomingEvents"
           :key="event.title"
-          :to="`/browse/events/${event.title === 'Vue.js Mastery Workshop' ? 1 : event.date === '15 OCT' ? 2 : 3}`"
+          :to="`/browse/events/${event.id}`"
           class="event-row"
         >
           <span class="event-name">
-            <time>{{ event.date }}</time>
             <strong>{{ event.title }}</strong>
           </span>
           <span class="event-category">{{ event.category }}</span>
-          <span class="attendee-count">{{ event.attendees }}</span>
+          <span class="event-location">
+            <time>{{ formatEventDate(event.date) }}</time>
+            {{ event.location }}
+          </span>
         </router-link>
+        <div v-if="!upcomingEvents.length" class="dashboard-empty">
+          <p>There are no active events at the moment.</p>
+          <router-link to="/dashboard/events">Create your first event</router-link>
+        </div>
       </div>
     </section>
   </div>
@@ -77,6 +88,17 @@ const upcomingEvents = [
 .dashboard-content {
   display: grid;
   gap: var(--space-8);
+}
+
+.storage-warning {
+  margin: 0;
+  padding: 12px 16px;
+  color: #a12533;
+  background: #fff3f4;
+  border: 1px solid #f1c8cc;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 .metrics-grid {
@@ -195,16 +217,8 @@ const upcomingEvents = [
   background: #fbfaff;
 }
 
-.event-name time,
 .event-name strong {
   display: block;
-}
-
-.event-name time {
-  margin-bottom: var(--space-1);
-  color: var(--primary);
-  font-size: 0.7rem;
-  font-weight: 700;
 }
 
 .event-name strong {
@@ -213,13 +227,40 @@ const upcomingEvents = [
 }
 
 .event-category,
-.attendee-count {
+.event-location {
   color: #666573;
   font-size: 0.85rem;
 }
 
-.attendee-count {
+.event-location {
+  display: grid;
+  gap: 2px;
+}
+
+.event-location time {
+  color: var(--primary);
+  font-size: 0.72rem;
   font-weight: 700;
+}
+
+.dashboard-empty {
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.dashboard-empty p {
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+}
+
+.dashboard-empty a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.dashboard-empty a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 800px) {

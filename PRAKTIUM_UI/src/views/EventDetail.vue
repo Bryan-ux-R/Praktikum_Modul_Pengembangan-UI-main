@@ -1,29 +1,48 @@
 <script setup>
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
+import { useEvents } from '@/composables/useEvents'
 
-const registerForEvent = () => {
-  window.location.href =
-    'mailto:hello@gatherly.com?subject=Registration%20for%20Vue.js%20Mastery%20Workshop'
-}
+const route = useRoute()
+const router = useRouter()
+const { events, formatEventDate, isUserRegistered, getRegistrationForEvent } = useEvents()
+const event = computed(() =>
+  events.value.find((item) => String(item.id) === String(route.params.id)),
+)
+const isRegistered = computed(() => Boolean(event.value && isUserRegistered(event.value.id)))
+const registration = computed(() =>
+  event.value ? getRegistrationForEvent(event.value.id) : undefined,
+)
+
+const registerForEvent = () =>
+  router.push({ name: 'event-registration', params: { eventId: route.params.id } })
+
+const ticketRoute = computed(() => ({
+  name: 'ticket-receipt',
+  params: { ticketId: registration.value?.id },
+}))
 </script>
 
 <template>
-  <article class="event-detail-page">
+  <article v-if="event" class="event-detail-page">
     <router-link to="/browse/events" class="btn-back">← Back to Events</router-link>
 
     <header class="detail-header">
       <div class="header-content">
-        <span class="event-tag">Workshop &amp; Training</span>
-        <h1>Vue.js Mastery Workshop</h1>
+        <span class="event-tag">{{ event.category }}</span>
+        <h1>{{ event.title }}</h1>
         <div class="meta-info">
           <div class="meta-item">
-            <span aria-hidden="true">📅</span><span>12 Oktober 2026</span>
+            <span aria-hidden="true">📅</span><span>{{ formatEventDate(event.date) }}</span>
           </div>
           <div class="meta-item">
-            <span aria-hidden="true">📍</span><span>Tech Hub, Jakarta Pusat</span>
+            <span aria-hidden="true">📍</span><span>{{ event.location }}</span>
           </div>
-          <div class="meta-item"><span aria-hidden="true">👥</span><span>150 peserta</span></div>
+          <div class="meta-item">
+            <span aria-hidden="true">👥</span><span>{{ event.remainingSeats }} seats left</span>
+          </div>
         </div>
       </div>
     </header>
@@ -32,15 +51,8 @@ const registerForEvent = () => {
       <section class="main-desc">
         <span class="section-eyebrow">Learn by building</span>
         <h2>About This Event</h2>
-        <p>
-          Build confidence with Vue.js in this practical, hands-on workshop. Together, we will
-          explore Vue 3 fundamentals, the Composition API, component patterns, and the tools used to
-          turn an idea into a polished interactive application.
-        </p>
-        <p>
-          Bring a laptop and questions. Whether you are strengthening your frontend foundation or
-          starting your next project, you will leave with techniques you can put to use right away.
-        </p>
+        <p>{{ event.description }}</p>
+        <p>Join us at {{ event.location }} and connect with others who share your interests.</p>
 
         <h2 class="agenda-heading">Event Agenda</h2>
         <ol class="agenda-list">
@@ -57,18 +69,60 @@ const registerForEvent = () => {
           <span class="ticket-kicker">Save your seat</span>
           <h2>Registration</h2>
           <p class="price">Free</p>
-          <p class="ticket-desc">
-            Join us for a full day of practical learning and connect with fellow Vue developers.
-          </p>
-          <AppButton class="btn-register" @click="registerForEvent">Register Now</AppButton>
-          <p class="spots">Only 12 seats left!</p>
+          <p class="ticket-desc">Save your seat and join the community at {{ event.title }}.</p>
+          <AppButton v-if="event.done" class="btn-register" :disabled="true" aria-disabled="true">
+            Registration Closed
+          </AppButton>
+          <AppButton
+            v-else-if="isRegistered"
+            class="btn-register"
+            :disabled="true"
+            aria-disabled="true"
+          >
+            Already Registered
+          </AppButton>
+          <router-link v-if="isRegistered" :to="ticketRoute" class="ticket-link">
+            View your ticket
+          </router-link>
+          <AppButton
+            v-else-if="event.remainingSeats <= 0"
+            class="btn-register"
+            :disabled="true"
+            aria-disabled="true"
+          >
+            Sold Out
+          </AppButton>
+          <AppButton v-else class="btn-register" @click="registerForEvent">
+            Register Now
+          </AppButton>
+          <p v-if="event.done" class="completed-notice">This event has been completed.</p>
         </AppCard>
       </aside>
     </div>
   </article>
+  <AppCard v-else tag="section" class="event-not-found">
+    <h1>Event not found</h1>
+    <p>This event may have been removed or is no longer available.</p>
+    <router-link to="/browse/events" class="btn-back">Back to Events</router-link>
+  </AppCard>
 </template>
 
 <style scoped>
+.event-not-found {
+  max-width: 720px;
+  margin: var(--space-12) auto;
+  text-align: center;
+}
+
+.event-not-found h1 {
+  margin: 0 0 var(--space-2);
+}
+
+.event-not-found p {
+  margin: 0 0 var(--space-4);
+  color: var(--text-muted);
+}
+
 .event-detail-page {
   max-width: 1200px;
   margin: 0 auto;
@@ -246,9 +300,22 @@ const registerForEvent = () => {
   border-radius: 10px;
 }
 
-.spots {
+.ticket-link {
+  display: inline-block;
+  margin-top: var(--space-3);
+  color: var(--primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ticket-link:hover {
+  text-decoration: underline;
+}
+
+.completed-notice {
   margin: var(--space-4) 0 0;
-  color: #c23b4a;
+  color: #24633d;
   font-size: 0.9rem;
   font-weight: 700;
 }
