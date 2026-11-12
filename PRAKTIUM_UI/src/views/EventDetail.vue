@@ -1,25 +1,28 @@
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import { useEvents } from '@/composables/useEvents'
 
 const route = useRoute()
-const { events, formatEventDate } = useEvents()
+const router = useRouter()
+const { events, formatEventDate, isUserRegistered, getRegistrationForEvent } = useEvents()
 const event = computed(() =>
   events.value.find((item) => String(item.id) === String(route.params.id)),
 )
+const isRegistered = computed(() => Boolean(event.value && isUserRegistered(event.value.id)))
+const registration = computed(() =>
+  event.value ? getRegistrationForEvent(event.value.id) : undefined,
+)
 
-const registerForEvent = () => {
-  if (!event.value) {
-    return
-  }
+const registerForEvent = () =>
+  router.push({ name: 'event-registration', params: { eventId: route.params.id } })
 
-  window.location.href = `mailto:hello@gatherly.com?subject=${encodeURIComponent(
-    `Registration for ${event.value.title}`,
-  )}`
-}
+const ticketRoute = computed(() => ({
+  name: 'ticket-receipt',
+  params: { ticketId: registration.value?.id },
+}))
 </script>
 
 <template>
@@ -37,7 +40,9 @@ const registerForEvent = () => {
           <div class="meta-item">
             <span aria-hidden="true">📍</span><span>{{ event.location }}</span>
           </div>
-          <div class="meta-item"><span aria-hidden="true">👥</span><span>150 peserta</span></div>
+          <div class="meta-item">
+            <span aria-hidden="true">👥</span><span>{{ event.remainingSeats }} seats left</span>
+          </div>
         </div>
       </div>
     </header>
@@ -65,10 +70,32 @@ const registerForEvent = () => {
           <h2>Registration</h2>
           <p class="price">Free</p>
           <p class="ticket-desc">Save your seat and join the community at {{ event.title }}.</p>
-          <AppButton v-if="!event.done" class="btn-register" @click="registerForEvent">
+          <AppButton v-if="event.done" class="btn-register" :disabled="true" aria-disabled="true">
+            Registration Closed
+          </AppButton>
+          <AppButton
+            v-else-if="isRegistered"
+            class="btn-register"
+            :disabled="true"
+            aria-disabled="true"
+          >
+            Already Registered
+          </AppButton>
+          <router-link v-if="isRegistered" :to="ticketRoute" class="ticket-link">
+            View your ticket
+          </router-link>
+          <AppButton
+            v-else-if="event.remainingSeats <= 0"
+            class="btn-register"
+            :disabled="true"
+            aria-disabled="true"
+          >
+            Sold Out
+          </AppButton>
+          <AppButton v-else class="btn-register" @click="registerForEvent">
             Register Now
           </AppButton>
-          <p v-else class="completed-notice">This event has been completed.</p>
+          <p v-if="event.done" class="completed-notice">This event has been completed.</p>
         </AppCard>
       </aside>
     </div>
@@ -271,6 +298,19 @@ const registerForEvent = () => {
   width: 100%;
   padding: var(--space-4);
   border-radius: 10px;
+}
+
+.ticket-link {
+  display: inline-block;
+  margin-top: var(--space-3);
+  color: var(--primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ticket-link:hover {
+  text-decoration: underline;
 }
 
 .completed-notice {

@@ -6,7 +6,7 @@ defineProps({
   },
   message: {
     type: String,
-    required: true,
+    default: '',
   },
   confirmLabel: {
     type: String,
@@ -15,6 +15,16 @@ defineProps({
   cancelLabel: {
     type: String,
     default: 'Cancel',
+  },
+  dialogRole: {
+    type: String,
+    default: 'alertdialog',
+    validator: (value) => ['alertdialog', 'dialog'].includes(value),
+  },
+  iconVariant: {
+    type: String,
+    default: 'warning',
+    validator: (value) => ['warning', 'success'].includes(value),
   },
 })
 
@@ -27,18 +37,32 @@ defineEmits(['confirm', 'close'])
       <div class="modal-overlay" role="presentation" @click.self="$emit('close')">
         <section
           class="confirmation-modal"
-          role="alertdialog"
+          :role="dialogRole"
           aria-modal="true"
           aria-labelledby="confirmation-title"
-          aria-describedby="confirmation-message"
+          :aria-describedby="message ? 'confirmation-message' : undefined"
           tabindex="-1"
           @keydown.esc.prevent.stop="$emit('close')"
         >
-          <span class="modal-icon" aria-hidden="true">!</span>
+          <span class="modal-icon" :class="`modal-icon--${iconVariant}`" aria-hidden="true">
+            {{ iconVariant === 'success' ? '✓' : '!' }}
+          </span>
           <h2 id="confirmation-title">{{ title }}</h2>
-          <p id="confirmation-message">{{ message }}</p>
-          <div class="modal-actions">
-            <button type="button" class="modal-cancel" autofocus @click="$emit('close')">
+          <p v-if="message" id="confirmation-message">{{ message }}</p>
+          <div v-if="$slots.default" class="modal-content">
+            <slot />
+          </div>
+          <div v-if="$slots.footer" class="modal-actions">
+            <slot name="footer" />
+          </div>
+          <div v-else-if="!$slots.default" class="modal-actions">
+            <button
+              v-if="cancelLabel"
+              type="button"
+              class="modal-cancel"
+              autofocus
+              @click="$emit('close')"
+            >
               {{ cancelLabel }}
             </button>
             <button type="button" class="modal-confirm" @click="$emit('confirm')">
@@ -59,12 +83,16 @@ defineEmits(['confirm', 'close'])
   display: grid;
   padding: 20px;
   place-items: center;
+  overflow-y: auto;
   background: rgba(18, 16, 43, 0.48);
   backdrop-filter: blur(6px);
 }
 
 .confirmation-modal {
   width: min(100%, 440px);
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
   padding: 28px;
   background: #fff;
   border: 1px solid var(--border-color);
@@ -85,6 +113,11 @@ defineEmits(['confirm', 'close'])
   font-weight: 800;
 }
 
+.modal-icon--success {
+  color: #24633d;
+  background: #e9f7ed;
+}
+
 .confirmation-modal h2 {
   margin: 0 0 8px;
   color: var(--text-main);
@@ -95,6 +128,10 @@ defineEmits(['confirm', 'close'])
   margin: 0;
   color: var(--text-muted);
   line-height: 1.6;
+}
+
+.modal-content {
+  margin-top: 16px;
 }
 
 .modal-actions {

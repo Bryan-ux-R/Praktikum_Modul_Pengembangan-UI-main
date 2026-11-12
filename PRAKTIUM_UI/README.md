@@ -44,6 +44,13 @@ and delete them after confirming the action. Event data is shared across the das
 list, categories, and detail pages through the `useEvents` composable and is saved in browser
 LocalStorage under the `gatherly-events` key.
 
+### Event Registration and Tickets
+
+Visitors can register from an event detail page, review saved tickets at `/your-events`, and open
+an individual ticket receipt at `/your-events/:ticketId`. Registrations, event seat counts, and
+event data share the same `useEvents` state and LocalStorage record. Registrations are stored
+locally in the current browser and are not synchronized to a server or other devices.
+
 ## Publish to GitHub Pages
 
 1. Push this project to a GitHub repository.

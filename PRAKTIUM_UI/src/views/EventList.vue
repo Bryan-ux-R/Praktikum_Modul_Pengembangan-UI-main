@@ -12,7 +12,7 @@ const router = useRouter()
 const route = useRoute()
 const searchQuery = ref('')
 const selectedCategory = ref(typeof route.query.category === 'string' ? route.query.category : '')
-const { activeEvents, categories } = useEvents()
+const { activeEvents, categories, isUserRegistered } = useEvents()
 
 const filteredEvents = computed(() => {
   const query = searchQuery.value.trim().toLocaleLowerCase()
@@ -84,6 +84,7 @@ const viewEvent = (eventId) => {
         v-for="event in filteredEvents"
         :key="event.id"
         :event="event"
+        :is-registered="isUserRegistered(event.id)"
         @view-detail="viewEvent"
       />
     </div>

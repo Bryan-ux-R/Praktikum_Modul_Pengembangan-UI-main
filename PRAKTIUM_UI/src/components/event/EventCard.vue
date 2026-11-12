@@ -7,6 +7,10 @@ defineProps({
     type: Object,
     required: true,
   },
+  isRegistered: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 defineEmits(['view-detail'])
@@ -16,18 +20,17 @@ defineEmits(['view-detail'])
   <AppCard tag="article" class="event-card">
     <div class="event-body">
       <div class="event-meta">
-        <span class="event-date">{{ event.date }}</span>
+        <div class="event-meta-left">
+          <span class="event-date">{{ event.date }}</span>
+          <span v-if="isRegistered" class="registered-badge">Registered</span>
+        </div>
         <span class="event-category">{{ event.category }}</span>
       </div>
       <h2>{{ event.title }}</h2>
       <p class="event-loc"><span aria-hidden="true">📍</span> {{ event.location }}</p>
       <p class="event-desc">{{ event.description }}</p>
       <div class="card-footer">
-        <AppButton
-          variant="secondary"
-          class="view-button"
-          @click="$emit('view-detail', event.id)"
-        >
+        <AppButton variant="secondary" class="view-button" @click="$emit('view-detail', event.id)">
           View Event Details <span aria-hidden="true">→</span>
         </AppButton>
       </div>
@@ -74,6 +77,22 @@ defineEmits(['view-detail'])
   background: #f0edff;
   border-radius: 6px;
   font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.event-meta-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+
+.registered-badge {
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  color: #24633d;
+  background: #e9f7ed;
+  border-radius: 6px;
+  font-size: 0.76rem;
   font-weight: 700;
 }
 
