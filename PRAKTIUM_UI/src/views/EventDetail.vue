@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -7,7 +7,16 @@ import { useEvents } from '@/composables/useEvents'
 
 const route = useRoute()
 const router = useRouter()
-const { events, formatEventDate, isUserRegistered, getRegistrationForEvent } = useEvents()
+const {
+  events,
+  formatEventDate,
+  isUserRegistered,
+  getRegistrationForEvent,
+  fetchEventById,
+  loading,
+  error,
+} = useEvents()
+const loadError = ref('')
 const event = computed(() =>
   events.value.find((item) => String(item.id) === String(route.params.id)),
 )
@@ -23,10 +32,39 @@ const ticketRoute = computed(() => ({
   name: 'ticket-receipt',
   params: { ticketId: registration.value?.id },
 }))
+
+const loadEvent = async () => {
+  loadError.value = ''
+
+  try {
+    await fetchEventById(route.params.id)
+  } catch (requestError) {
+    loadError.value =
+      requestError instanceof Error ? requestError.message : 'The event could not be loaded.'
+  }
+}
+
+watch(() => route.params.id, loadEvent, { immediate: true })
 </script>
 
 <template>
-  <article v-if="event" class="event-detail-page">
+  <AppCard v-if="loading" class="event-loading" role="status">
+    <span class="skeleton-line skeleton-title"></span>
+    <span class="skeleton-line"></span>
+    <span class="skeleton-line skeleton-short"></span>
+    <p>Loading event details…</p>
+  </AppCard>
+  <AppCard v-else-if="loadError || error" class="event-not-found event-error" role="alert">
+    <h1>{{ error.includes('not be found') ? 'Event not found' : 'Event could not be loaded' }}</h1>
+    <p>{{ loadError || error }}</p>
+    <div class="event-error-actions">
+      <AppButton variant="secondary" @click="router.push({ name: 'events' })">
+        Back to Events
+      </AppButton>
+      <AppButton @click="loadEvent">Try again</AppButton>
+    </div>
+  </AppCard>
+  <article v-else-if="event" class="event-detail-page">
     <router-link to="/browse/events" class="btn-back">← Back to Events</router-link>
 
     <header class="detail-header">
@@ -112,6 +150,26 @@ const ticketRoute = computed(() => ({
   max-width: 720px;
   margin: var(--space-12) auto;
   text-align: center;
+}
+
+.event-loading {
+  display: grid;
+  max-width: 720px;
+  gap: var(--space-4);
+  margin: var(--space-12) auto;
+  padding: clamp(28px, 6vw, 48px);
+}
+
+.event-loading p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.event-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
 }
 
 .event-not-found h1 {

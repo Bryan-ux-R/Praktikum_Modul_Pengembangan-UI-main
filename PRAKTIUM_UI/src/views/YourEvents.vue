@@ -1,14 +1,32 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import { useEvents } from '@/composables/useEvents'
 
-const { events, userRegistrations, cancelRegistration, formatEventDate } = useEvents()
+const {
+  events,
+  userRegistrations,
+  cancelRegistration,
+  formatEventDate,
+  fetchEvents,
+  loading,
+  error: apiError,
+} = useEvents()
 
 const registrationToCancel = ref(null)
 const cancellationError = ref('')
+
+const loadEvents = async () => {
+  try {
+    await fetchEvents()
+  } catch {
+    // Saved tickets remain available locally while the API error is shown.
+  }
+}
+
+onMounted(loadEvents)
 
 const tickets = computed(() =>
   userRegistrations.value
@@ -44,6 +62,11 @@ const confirmCancellation = () => {
     <p v-if="cancellationError" class="cancellation-error" role="alert">
       {{ cancellationError }}
     </p>
+
+    <div v-if="apiError" class="cancellation-error api-warning" role="alert">
+      <span>{{ apiError }} Saved tickets are still available from this browser.</span>
+      <AppButton variant="secondary" :loading="loading" @click="loadEvents">Try again</AppButton>
+    </div>
 
     <div v-if="tickets.length" class="ticket-grid">
       <AppCard v-for="ticket in tickets" :key="ticket.id" tag="article" class="ticket-card">
@@ -147,6 +170,14 @@ const confirmCancellation = () => {
   border: 1px solid #f1c8cc;
   border-radius: 10px;
   line-height: 1.5;
+}
+
+.api-warning {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .ticket-grid {

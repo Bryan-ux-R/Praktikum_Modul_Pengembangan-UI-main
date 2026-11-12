@@ -1,8 +1,28 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import AppButton from '@/components/ui/AppButton.vue'
 import { useEvents } from '@/composables/useEvents'
 
-const { totalEvents, activeEvents, completedEvents, formatEventDate, storageError } = useEvents()
+const {
+  totalEvents,
+  activeEvents,
+  completedEvents,
+  formatEventDate,
+  storageError,
+  loading,
+  error: apiError,
+  fetchEvents,
+} = useEvents()
+
+const loadEvents = async () => {
+  try {
+    await fetchEvents()
+  } catch {
+    // The composable exposes the failure in the dashboard.
+  }
+}
+
+onMounted(loadEvents)
 
 const metrics = computed(() => [
   {
@@ -31,6 +51,10 @@ const upcomingEvents = computed(() => activeEvents.value.slice(0, 3))
 <template>
   <div class="dashboard-content">
     <p v-if="storageError" class="storage-warning" role="alert">{{ storageError }}</p>
+    <div v-if="apiError" class="storage-warning" role="alert">
+      <span>{{ apiError }}</span>
+      <AppButton variant="secondary" :loading="loading" @click="loadEvents">Try again</AppButton>
+    </div>
 
     <section class="metrics-grid" aria-label="Event summary">
       <article v-for="metric in metrics" :key="metric.label" class="metric-card">

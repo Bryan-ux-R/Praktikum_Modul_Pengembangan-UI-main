@@ -59,6 +59,31 @@ body {
   overflow-x: hidden;
 }
 
+.skeleton-line {
+  display: block;
+  width: 78%;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f0eff5 25%, #faf9fc 50%, #f0eff5 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-title {
+  width: 58%;
+  height: 22px;
+}
+
+.skeleton-short {
+  width: 46%;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
 .container-fluid {
   width: 100%;
   max-width: 1200px;

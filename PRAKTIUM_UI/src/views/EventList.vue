@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CategoryFilter from '@/components/event/CategoryFilter.vue'
 import EventCard from '@/components/event/EventCard.vue'
@@ -12,7 +12,15 @@ const router = useRouter()
 const route = useRoute()
 const searchQuery = ref('')
 const selectedCategory = ref(typeof route.query.category === 'string' ? route.query.category : '')
-const { activeEvents, categories, isUserRegistered } = useEvents()
+const { activeEvents, categories, isUserRegistered, fetchEvents, loading, error } = useEvents()
+
+const loadEvents = async () => {
+  try {
+    await fetchEvents()
+  } catch {
+    // The composable exposes the request error for the error state below.
+  }
+}
 
 const filteredEvents = computed(() => {
   const query = searchQuery.value.trim().toLocaleLowerCase()
@@ -60,6 +68,8 @@ const clearFilters = () => {
 const viewEvent = (eventId) => {
   router.push({ name: 'event-detail', params: { id: eventId } })
 }
+
+onMounted(loadEvents)
 </script>
 
 <template>
@@ -75,32 +85,49 @@ const viewEvent = (eventId) => {
       <CategoryFilter v-model="selectedCategory" :categories="categories" />
     </section>
 
-    <p class="results-count" role="status" aria-live="polite">
-      {{ filteredEvents.length }} {{ filteredEvents.length === 1 ? 'event' : 'events' }} found
-    </p>
-
-    <div v-if="filteredEvents.length" class="event-grid">
-      <EventCard
-        v-for="event in filteredEvents"
-        :key="event.id"
-        :event="event"
-        :is-registered="isUserRegistered(event.id)"
-        @view-detail="viewEvent"
-      />
+    <div v-if="loading" class="event-grid" role="status" aria-label="Loading events">
+      <AppCard v-for="item in 3" :key="item" class="event-skeleton">
+        <span class="skeleton-line skeleton-title"></span>
+        <span class="skeleton-line"></span>
+        <span class="skeleton-line skeleton-short"></span>
+      </AppCard>
     </div>
 
-    <AppCard v-else-if="activeEvents.length" tag="section" class="empty-state" aria-live="polite">
-      <span class="empty-icon" aria-hidden="true">⌕</span>
-      <h2>No events found</h2>
-      <p>Try another search or choose a different category.</p>
-      <AppButton variant="secondary" @click="clearFilters">Clear filters</AppButton>
+    <AppCard v-else-if="error" tag="section" class="empty-state api-error" role="alert">
+      <span class="empty-icon" aria-hidden="true">!</span>
+      <h2>Events could not be loaded</h2>
+      <p>{{ error }}</p>
+      <AppButton :loading="loading" :disabled="loading" @click="loadEvents">Try again</AppButton>
     </AppCard>
-    <AppCard v-else tag="section" class="empty-state" aria-live="polite">
-      <span class="empty-icon" aria-hidden="true">◇</span>
-      <h2>No active events yet</h2>
-      <p>Check back soon or create an event from the organizer dashboard.</p>
-      <AppButton @click="router.push('/dashboard/events')">Create an event</AppButton>
-    </AppCard>
+
+    <template v-else>
+      <p class="results-count" role="status" aria-live="polite">
+        {{ filteredEvents.length }} {{ filteredEvents.length === 1 ? 'event' : 'events' }} found
+      </p>
+
+      <div v-if="filteredEvents.length" class="event-grid">
+        <EventCard
+          v-for="event in filteredEvents"
+          :key="event.id"
+          :event="event"
+          :is-registered="isUserRegistered(event.id)"
+          @view-detail="viewEvent"
+        />
+      </div>
+
+      <AppCard v-else-if="activeEvents.length" tag="section" class="empty-state" aria-live="polite">
+        <span class="empty-icon" aria-hidden="true">⌕</span>
+        <h2>No events found</h2>
+        <p>Try another search or choose a different category.</p>
+        <AppButton variant="secondary" @click="clearFilters">Clear filters</AppButton>
+      </AppCard>
+      <AppCard v-else tag="section" class="empty-state" aria-live="polite">
+        <span class="empty-icon" aria-hidden="true">◇</span>
+        <h2>No active events yet</h2>
+        <p>Check back soon or create an event from the organizer dashboard.</p>
+        <AppButton @click="router.push('/dashboard/events')">Create an event</AppButton>
+      </AppCard>
+    </template>
   </section>
 </template>
 
@@ -183,6 +210,18 @@ const viewEvent = (eventId) => {
   margin: 0 0 var(--space-6);
   color: var(--text-muted);
   line-height: 1.6;
+}
+
+.event-skeleton {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-height: 210px;
+  padding: var(--space-6);
+}
+
+.api-error p {
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 650px) {

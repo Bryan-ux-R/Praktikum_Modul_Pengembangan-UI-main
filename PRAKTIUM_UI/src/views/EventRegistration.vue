@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -10,9 +10,17 @@ import { useEvents } from '@/composables/useEvents'
 
 const route = useRoute()
 const router = useRouter()
-const { events, registerAttendee, isUserRegistered, getRegistrationForEvent, formatEventDate } =
-  useEvents()
+const {
+  events,
+  registerAttendee,
+  isUserRegistered,
+  getRegistrationForEvent,
+  formatEventDate,
+  fetchEventById,
+} = useEvents()
 
+const isLoadingEvent = ref(true)
+const eventLoadError = ref('')
 const event = computed(() =>
   events.value.find((item) => String(item.id) === String(route.params.eventId)),
 )
@@ -29,6 +37,22 @@ const registrationClosed = computed(
       isUserRegistered(event.value.id) ||
       event.value.remainingSeats <= 0),
 )
+
+const loadEvent = async () => {
+  eventLoadError.value = ''
+  isLoadingEvent.value = true
+
+  try {
+    await fetchEventById(route.params.eventId)
+  } catch (requestError) {
+    eventLoadError.value =
+      requestError instanceof Error ? requestError.message : 'The event could not be loaded.'
+  } finally {
+    isLoadingEvent.value = false
+  }
+}
+
+onMounted(loadEvent)
 
 const submitRegistration = (attendee) => {
   submissionError.value = ''
@@ -67,7 +91,20 @@ const returnToEvent = () => {
       <p>Review the event and add your details to reserve your seat.</p>
     </header>
 
-    <div v-if="!event" class="unavailable-state">
+    <div v-if="isLoadingEvent" class="unavailable-state" role="status">
+      <AppCard>
+        <h2>Loading event</h2>
+        <p>Please wait while we load the latest event details.</p>
+      </AppCard>
+    </div>
+    <div v-else-if="eventLoadError" class="unavailable-state" role="alert">
+      <AppCard>
+        <h2>Event could not be loaded</h2>
+        <p>{{ eventLoadError }}</p>
+        <AppButton @click="loadEvent">Try again</AppButton>
+      </AppCard>
+    </div>
+    <div v-else-if="!event" class="unavailable-state">
       <AppCard>
         <h2>Event not found</h2>
         <p>This event is no longer available for registration.</p>

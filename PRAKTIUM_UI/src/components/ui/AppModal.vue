@@ -26,6 +26,10 @@ defineProps({
     default: 'warning',
     validator: (value) => ['warning', 'success'].includes(value),
   },
+  confirmDisabled: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 defineEmits(['confirm', 'close'])
@@ -65,7 +69,12 @@ defineEmits(['confirm', 'close'])
             >
               {{ cancelLabel }}
             </button>
-            <button type="button" class="modal-confirm" @click="$emit('confirm')">
+            <button
+              type="button"
+              class="modal-confirm"
+              :disabled="confirmDisabled"
+              @click="$emit('confirm')"
+            >
               {{ confirmLabel }}
             </button>
           </div>
@@ -160,6 +169,11 @@ defineEmits(['confirm', 'close'])
 .modal-confirm {
   color: #fff;
   background: #b42333;
+}
+
+.modal-confirm:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .modal-actions button:focus-visible {

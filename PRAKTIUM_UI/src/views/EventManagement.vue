@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -10,7 +10,10 @@ const {
   completedEvents,
   categories,
   storageError,
-  addEvent,
+  loading,
+  error: apiError,
+  fetchEvents,
+  createEvent: createEventRequest,
   completeEvent,
   deleteEvent,
   formatEventDate,
@@ -20,6 +23,8 @@ const currentTab = ref('active')
 const errorMessage = ref('')
 const successMessage = ref('')
 const eventToDelete = ref(null)
+const isSubmitting = ref(false)
+const isDeleting = ref(false)
 const form = reactive({
   title: '',
   category: '',
@@ -31,6 +36,16 @@ const form = reactive({
 const visibleEvents = computed(() =>
   currentTab.value === 'completed' ? completedEvents.value : activeEvents.value,
 )
+
+const loadEvents = async () => {
+  try {
+    await fetchEvents()
+  } catch {
+    // The composable exposes the request error in the management page.
+  }
+}
+
+onMounted(loadEvents)
 
 watch(
   form,
@@ -50,7 +65,11 @@ const selectTab = (tab) => {
   resetFeedback()
 }
 
-const createEvent = () => {
+const createEvent = async () => {
+  if (isSubmitting.value) {
+    return
+  }
+
   resetFeedback()
 
   const missingField = Object.values(form).some((value) => !value.trim())
@@ -65,16 +84,25 @@ const createEvent = () => {
     return
   }
 
-  const event = addEvent(form)
-  Object.assign(form, {
-    title: '',
-    category: '',
-    date: '',
-    location: '',
-    description: '',
-  })
-  currentTab.value = 'active'
-  successMessage.value = `"${event.title}" was added to active events.`
+  isSubmitting.value = true
+
+  try {
+    const event = await createEventRequest(form)
+    Object.assign(form, {
+      title: '',
+      category: '',
+      date: '',
+      location: '',
+      description: '',
+    })
+    currentTab.value = 'active'
+    successMessage.value = `"${event.title}" was added to active events.`
+  } catch (requestError) {
+    errorMessage.value =
+      requestError instanceof Error ? requestError.message : 'The event could not be published.'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 const markComplete = (event) => {
@@ -88,21 +116,34 @@ const markComplete = (event) => {
   successMessage.value = `"${event.title}" was moved to completed events.`
 }
 
-const confirmDelete = () => {
-  if (!eventToDelete.value) {
+const confirmDelete = async () => {
+  if (!eventToDelete.value || isDeleting.value) {
     return
   }
 
   const { id, title } = eventToDelete.value
-  eventToDelete.value = null
   resetFeedback()
+  isDeleting.value = true
 
-  if (!deleteEvent(id)) {
-    errorMessage.value = 'This event could not be deleted. Refresh and try again.'
-    return
+  try {
+    if (!(await deleteEvent(id))) {
+      throw new Error('This event could not be found in the current event list.')
+    }
+
+    eventToDelete.value = null
+    successMessage.value = `"${title}" was deleted.`
+  } catch (requestError) {
+    errorMessage.value =
+      requestError instanceof Error ? requestError.message : 'The event could not be deleted.'
+    eventToDelete.value = null
+  } finally {
+    isDeleting.value = false
   }
+}
 
-  successMessage.value = `"${title}" was deleted.`
+const requestEventDelete = (event) => {
+  resetFeedback()
+  eventToDelete.value = event
 }
 </script>
 
@@ -119,6 +160,14 @@ const confirmDelete = () => {
     <p v-if="storageError" class="feedback-message feedback-error" role="alert">
       {{ storageError }}
     </p>
+    <div
+      v-if="apiError && !errorMessage"
+      class="feedback-message feedback-error management-api-error"
+      role="alert"
+    >
+      <span>{{ apiError }}</span>
+      <AppButton variant="secondary" :loading="loading" @click="loadEvents">Try again</AppButton>
+    </div>
     <p v-if="errorMessage" class="feedback-message feedback-error" role="alert">
       {{ errorMessage }}
     </p>
@@ -223,7 +272,9 @@ const confirmDelete = () => {
         </div>
 
         <div class="form-actions">
-          <AppButton type="submit">Publish Event</AppButton>
+          <AppButton type="submit" :loading="isSubmitting" :disabled="isSubmitting">
+            Publish Event
+          </AppButton>
         </div>
       </form>
 
@@ -252,7 +303,12 @@ const confirmDelete = () => {
             <AppButton v-if="!event.done" variant="secondary" @click="markComplete(event)">
               Mark Complete
             </AppButton>
-            <AppButton variant="secondary" class="delete-button" @click="eventToDelete = event">
+            <AppButton
+              variant="secondary"
+              class="delete-button"
+              :disabled="isDeleting"
+              @click="requestEventDelete(event)"
+            >
               Delete
             </AppButton>
           </div>
@@ -282,6 +338,7 @@ const confirmDelete = () => {
       title="Delete this event?"
       :message="`“${eventToDelete.title}” will be permanently removed from your event list.`"
       confirm-label="Delete event"
+      :confirm-disabled="isDeleting"
       @confirm="confirmDelete"
       @close="eventToDelete = null"
     />
@@ -337,6 +394,14 @@ const confirmDelete = () => {
   color: #24633d;
   background: #f0faf3;
   border-color: #ccebd5;
+}
+
+.management-api-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .management-tabs {
